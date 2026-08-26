@@ -1,0 +1,6 @@
+{
+  "name": "Wat'EWrites",
+  "description": "An aesthetic digital journal, essay publication, and content management studio for thoughtful writing, technology, and craft.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
