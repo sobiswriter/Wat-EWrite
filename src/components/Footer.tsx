@@ -37,18 +37,17 @@ export const Footer: React.FC<FooterProps> = ({
           <div className="md:col-span-5 space-y-4">
             <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-md bg-white text-[#111111] flex items-center justify-center font-serif font-bold text-sm">
-                T
+                {settings.blogName ? settings.blogName.charAt(0) : 'W'}
               </div>
               <div className="flex items-baseline gap-1.5 font-sans font-bold text-lg text-white">
-                <span>Tools</span>
-                <span className="font-serif italic font-normal text-white/90">& Craft</span>
+                <span>{settings.blogName || "Wat'EWrites"}</span>
               </div>
             </div>
             <p className="text-xs sm:text-sm text-[#999999] leading-relaxed max-w-sm">
-              Thoughts on the future of work, from the people and teams creating it. Devoted to the timeless principles of thoughtful software engineering, typography, and human-first product design.
+              {settings.description || "Thoughts on the future of work, technology, and craft."}
             </p>
             <div className="pt-2 text-xs text-[#888888]">
-              Published with care by <strong>Linus Lee & Julian Vance</strong>.
+              Published with care by <strong>{settings.authorName}</strong>.
             </div>
           </div>
 

@@ -49,6 +49,8 @@ interface BlogContextType {
   createPost: (postData: Omit<Post, 'id' | 'views' | 'likes'>) => Post;
   updatePost: (id: string, postData: Partial<Post>) => void;
   deletePost: (id: string) => void;
+  claimAllPostsAsAuthor: () => void;
+  deleteStarterPosts: () => void;
   togglePostFeatured: (id: string) => void;
   togglePostDraft: (id: string) => void;
   likePost: (id: string) => void;
@@ -251,9 +253,20 @@ export const BlogProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         } else if (!snapshot.empty) {
           const loadedPosts: Post[] = [];
+          const dummyAuthorNames = ['Linus Lee', 'Julian Vance', 'Fuzzy Khosrowshahi', 'Clara Oswald', 'Maya Lin', 'Elena Rostova'];
+          
           snapshot.forEach((docSnap) => {
             const data = docSnap.data() as Post;
-            loadedPosts.push({ ...data, id: docSnap.id });
+            let postAuthor = data.author;
+            // If post has a dummy author name or missing author, auto-normalize to current author settings
+            if (!postAuthor || dummyAuthorNames.includes(postAuthor.name)) {
+              postAuthor = {
+                name: INITIAL_SETTINGS.authorName || 'Sobi',
+                avatar: INITIAL_SETTINGS.authorAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+                role: INITIAL_SETTINGS.authorRole || 'Author & Creator'
+              };
+            }
+            loadedPosts.push({ ...data, author: postAuthor, id: docSnap.id });
           });
           // Sort by publishedAt descending
           loadedPosts.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
@@ -276,12 +289,25 @@ export const BlogProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         } else if (snapshot.exists()) {
           const remoteSettings = snapshot.data() as BlogSettings;
+          const isLegacyDummyAuthor = remoteSettings.authorName === 'Linus Lee & Julian Vance';
+          const sanitizedSettings: BlogSettings = {
+            ...remoteSettings,
+            authorName: isLegacyDummyAuthor ? 'Sobi' : (remoteSettings.authorName || 'Sobi'),
+            authorRole: isLegacyDummyAuthor ? 'Author & Creator' : (remoteSettings.authorRole || 'Author & Creator'),
+            authorLocation: isLegacyDummyAuthor ? 'Global' : (remoteSettings.authorLocation || 'Global'),
+            authorBio: isLegacyDummyAuthor ? INITIAL_SETTINGS.authorBio : remoteSettings.authorBio
+          };
+
+          if (isLegacyDummyAuthor) {
+            setDoc(settingsDocRef, cleanData(sanitizedSettings), { merge: true }).catch(() => {});
+          }
+
           setSettings((prev) => ({
             ...prev,
-            ...remoteSettings,
+            ...sanitizedSettings,
             socialLinks: {
               ...prev.socialLinks,
-              ...(remoteSettings.socialLinks || {})
+              ...(sanitizedSettings.socialLinks || {})
             }
           }));
           setIsCloudSynced(true);
@@ -533,6 +559,49 @@ export const BlogProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const nextFeatured = (settings.featuredPostIds || []).filter(pid => pid !== id);
     const settingsRef = doc(db, 'settings', 'site');
     setDoc(settingsRef, { featuredPostIds: nextFeatured }, { merge: true }).catch(() => {});
+  };
+
+  const claimAllPostsAsAuthor = () => {
+    const currentAuthor = {
+      name: settings.authorName || 'Sobi',
+      avatar: settings.authorAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+      role: settings.authorRole || 'Author & Creator'
+    };
+
+    setPosts(prev => prev.map(p => ({ ...p, author: currentAuthor })));
+
+    // Update in Firestore
+    posts.forEach(p => {
+      const postRef = doc(db, 'posts', p.id);
+      setDoc(postRef, cleanData({ ...p, author: currentAuthor }), { merge: true }).catch(err => {
+        console.error('Error claiming post as author:', err);
+      });
+    });
+  };
+
+  const deleteStarterPosts = () => {
+    const STARTER_IDS = [
+      'post-ai-plastic',
+      'post-hbr-knowledge',
+      'post-1',
+      'post-2',
+      'post-3',
+      'post-4',
+      'post-pioneers-engelbart'
+    ];
+
+    setPosts(prev => prev.filter(p => !STARTER_IDS.includes(p.id)));
+    setSettings(prev => ({
+      ...prev,
+      featuredPostIds: (prev.featuredPostIds || []).filter(id => !STARTER_IDS.includes(id))
+    }));
+
+    STARTER_IDS.forEach(id => {
+      const postRef = doc(db, 'posts', id);
+      deleteDoc(postRef).catch(err => {
+        console.warn('Error deleting starter post from Firestore:', err);
+      });
+    });
   };
 
   const togglePostFeatured = (id: string) => {
@@ -831,6 +900,18 @@ export const BlogProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
     });
 
+    // If author avatar, name, or role changed, cascade to all posts
+    if (newSettings.authorAvatar || newSettings.authorName || newSettings.authorRole) {
+      setPosts(prev => prev.map(p => ({
+        ...p,
+        author: {
+          name: newSettings.authorName || p.author?.name || settings.authorName,
+          avatar: newSettings.authorAvatar || p.author?.avatar || settings.authorAvatar,
+          role: newSettings.authorRole || p.author?.role || settings.authorRole
+        }
+      })));
+    }
+
     const settingsRef = doc(db, 'settings', 'site');
     setDoc(settingsRef, cleanData(newSettings), { merge: true }).catch(err => {
       console.error('Error saving settings to Firestore:', err);
@@ -863,6 +944,8 @@ export const BlogProvider: React.FC<{ children: React.ReactNode }> = ({ children
         createPost,
         updatePost,
         deletePost,
+        claimAllPostsAsAuthor,
+        deleteStarterPosts,
         togglePostFeatured,
         togglePostDraft,
         likePost,

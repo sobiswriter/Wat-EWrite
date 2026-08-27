@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useBlog } from '../../context/BlogContext';
 import { AboutPrinciple } from '../../types';
 import {
@@ -26,11 +26,11 @@ export const AboutManager: React.FC = () => {
   const avatarFileInputRef = useRef<HTMLInputElement>(null);
   const [isDraggingAvatar, setIsDraggingAvatar] = useState(false);
 
-  const [authorName, setAuthorName] = useState(settings.authorName || 'Linus Lee & Julian Vance');
-  const [authorRole, setAuthorRole] = useState(settings.authorRole || 'Editorial Collective');
-  const [authorLocation, setAuthorLocation] = useState(settings.authorLocation || 'San Francisco, California');
+  const [authorName, setAuthorName] = useState(settings.authorName || 'Sobi');
+  const [authorRole, setAuthorRole] = useState(settings.authorRole || 'Author & Creator');
+  const [authorLocation, setAuthorLocation] = useState(settings.authorLocation || 'Global');
   const [authorAvatar, setAuthorAvatar] = useState(settings.authorAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80');
-  const [authorBio, setAuthorBio] = useState(settings.authorBio || 'Writers, engineers, and researchers exploring human-computer interaction, spatial software, and digital typography.');
+  const [authorBio, setAuthorBio] = useState(settings.authorBio || 'Writer, engineer, and creator exploring technology, thoughtful software, and digital craftsmanship.');
   
   const [aboutEditorialThesis, setAboutEditorialThesis] = useState(
     settings.aboutEditorialThesis ||
@@ -63,6 +63,18 @@ export const AboutManager: React.FC = () => {
           }
         ];
   });
+
+  // Keep local state in sync when settings change
+  useEffect(() => {
+    if (settings.authorName) setAuthorName(settings.authorName);
+    if (settings.authorRole) setAuthorRole(settings.authorRole);
+    if (settings.authorLocation) setAuthorLocation(settings.authorLocation);
+    if (settings.authorAvatar) setAuthorAvatar(settings.authorAvatar);
+    if (settings.authorBio) setAuthorBio(settings.authorBio);
+    if (settings.aboutEditorialThesis) setAboutEditorialThesis(settings.aboutEditorialThesis);
+    if (settings.aboutEditorialSubtitle) setAboutEditorialSubtitle(settings.aboutEditorialSubtitle);
+    if (settings.aboutPrinciples) setPrinciples(settings.aboutPrinciples);
+  }, [settings]);
 
   const [aboutColophon, setAboutColophon] = useState(
     settings.aboutColophon ||

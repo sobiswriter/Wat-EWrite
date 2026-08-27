@@ -14,7 +14,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   onSelectPost,
   variant = 'standard'
 }) => {
-  const { bookmarks, toggleBookmark, likePost } = useBlog();
+  const { bookmarks, toggleBookmark, likePost, settings } = useBlog();
   const isBookmarked = bookmarks.includes(post.id);
 
   if (variant === 'compact') {
@@ -91,17 +91,17 @@ export const PostCard: React.FC<PostCardProps> = ({
       <div className="mt-4 pt-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <img
-            src={post.author.avatar}
-            alt={post.author.name}
+            src={post.author?.avatar || settings.authorAvatar}
+            alt={post.author?.name || settings.authorName}
             className="w-8 h-8 rounded-full object-cover border border-[#E5E2DC]"
             referrerPolicy="no-referrer"
           />
           <div>
             <div className="text-xs font-bold text-[#111111] leading-tight">
-              {post.author.name}
+              {post.author?.name || settings.authorName}
             </div>
             <div className="text-[11px] text-[#777777] leading-tight">
-              {post.author.role}
+              {post.author?.role || settings.authorRole || 'Author'}
             </div>
           </div>
         </div>

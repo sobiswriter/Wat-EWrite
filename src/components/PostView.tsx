@@ -251,13 +251,13 @@ export const PostView: React.FC<PostViewProps> = ({
           {/* Author info & date */}
           <div className="flex items-center justify-center gap-3 mt-6 pt-6 border-t border-[#E5E2DC] text-xs text-[#6B665F]">
             <img
-              src={post.author.avatar}
-              alt={post.author.name}
+              src={post.author?.avatar || settings.authorAvatar}
+              alt={post.author?.name || settings.authorName}
               className="w-9 h-9 rounded-full object-cover border border-[#E5E2DC]"
               referrerPolicy="no-referrer"
             />
             <div className="text-left">
-              <div className="font-semibold text-[#1A1A1A]">{post.author.name}</div>
+              <div className="font-semibold text-[#1A1A1A]">{post.author?.name || settings.authorName}</div>
               <div className="flex items-center gap-1.5 text-[11px]">
                 <Calendar className="w-3 h-3 text-[#D44D2E]" />
                 <span>
@@ -427,14 +427,14 @@ export const PostView: React.FC<PostViewProps> = ({
         {/* Author Bio Card */}
         <div className="my-12 p-6 sm:p-8 bg-white rounded-2xl border border-[#E5E2DC] shadow-xs flex flex-col sm:flex-row items-center sm:items-start gap-6">
           <img
-            src={post.author.avatar}
-            alt={post.author.name}
+            src={post.author?.avatar || settings.authorAvatar}
+            alt={post.author?.name || settings.authorName}
             className="w-20 h-20 rounded-2xl object-cover border-2 border-[#E5E2DC] shrink-0"
             referrerPolicy="no-referrer"
           />
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-serif text-xl font-bold text-[#1A1A1A]">Written by {post.author.name}</h3>
+              <h3 className="font-serif text-xl font-bold text-[#1A1A1A]">Written by {post.author?.name || settings.authorName}</h3>
               <span className="text-xs bg-[#F9EBE7] text-[#942C17] font-semibold px-2 py-0.5 rounded-full">
                 Author
               </span>
@@ -478,7 +478,7 @@ export const PostView: React.FC<PostViewProps> = ({
               Subscribe to {settings.newsletterTitle}
             </h3>
             <p className="mt-2 text-sm text-[#D3CEC4] leading-relaxed">
-              Get Julian’s next essay delivered cleanly to your inbox every Sunday morning. No spam, ever.
+              Get {settings.authorName ? `${settings.authorName}’s` : 'the'} next essay delivered cleanly to your inbox every Sunday morning. No spam, ever.
             </p>
             <form onSubmit={handleFooterSubscribe} className="mt-5 flex flex-col sm:flex-row gap-2">
               <input

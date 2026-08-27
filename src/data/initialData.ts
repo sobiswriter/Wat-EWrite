@@ -31,11 +31,11 @@ export const INITIAL_SETTINGS: BlogSettings = {
     { value: "100/100", label: "Lighthouse Performance" },
     { value: "GSAP + React", label: "Fluid Interactive Motion" }
   ],
-  authorName: "Linus Lee & Julian Vance",
-  authorBio: "Writers, engineers, and researchers exploring human-computer interaction, spatial software, and digital typography.",
+  authorName: "Sobi",
+  authorBio: "Writer, engineer, and creator exploring technology, thoughtful software, and digital craftsmanship.",
   authorAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
-  authorRole: "Editorial Collective",
-  authorLocation: "San Francisco, California",
+  authorRole: "Author & Creator",
+  authorLocation: "Global",
   aboutEditorialThesis: "The modern digital landscape is overwhelmed with noise: ephemeral timelines, clickbait hype cycles, and superficial feature races. Wat'EWrites exists as a publication for deliberate thought, lasting tools, and human-computer symbiosis.",
   aboutEditorialSubtitle: "We explore software engineering with the reverence of an artisanal craft. Exceptional software is quiet, durable, fast, and crafted with deep respect for typography and human attention.",
   aboutPrinciples: [
@@ -103,9 +103,9 @@ The measure of great software craft in the AI decade will not be how flashy the 
     category: "Notion HQ",
     tags: ["Artificial Intelligence", "Future of Work", "Software Craft", "Philosophy"],
     author: {
-      name: "Linus Lee",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80",
-      role: "AI Editor at Large"
+      name: "Sobi",
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
+      role: "Author"
     },
     publishedAt: "2026-08-25T10:00:00Z",
     readingTime: 4,
@@ -141,9 +141,9 @@ Human organizations generate information at an exponential rate, but human capac
     category: "For Teams",
     tags: ["Knowledge Management", "Teams", "Productivity", "Enterprise"],
     author: {
-      name: "Fuzzy Khosrowshahi",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80",
-      role: "Chief Technology Officer"
+      name: "Sobi",
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
+      role: "Author"
     },
     publishedAt: "2026-08-22T14:30:00Z",
     readingTime: 6,
@@ -195,9 +195,9 @@ When you build with constraints, you are forced to solve root problems rather th
     category: "Design Philosophy",
     tags: ["Product Design", "Minimalism", "Craft", "Philosophy"],
     author: {
-      name: "Julian Vance",
+      name: "Sobi",
       avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
-      role: "Staff Design Engineer"
+      role: "Author"
     },
     publishedAt: "2026-08-20T09:30:00Z",
     readingTime: 4,
@@ -250,9 +250,9 @@ By combining a warm, expressive serif heading with a crisp, geometric sans body,
     category: "Typography",
     tags: ["Typography", "CSS", "UI Design", "Systems"],
     author: {
-      name: "Clara Oswald",
-      avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80",
-      role: "Principal Type Designer"
+      name: "Sobi",
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
+      role: "Author"
     },
     publishedAt: "2026-08-14T14:15:00Z",
     readingTime: 5,
@@ -302,9 +302,9 @@ export function setupScrollProgress(
     category: "Tech",
     tags: ["Architecture", "Performance", "TypeScript", "Frontend"],
     author: {
-      name: "Maya Lin",
-      avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&auto=format&fit=crop&q=80",
-      role: "Systems Architect"
+      name: "Sobi",
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
+      role: "Author"
     },
     publishedAt: "2026-08-08T11:00:00Z",
     readingTime: 6,
@@ -338,9 +338,9 @@ A digital garden is fundamentally different. It is a collection of notes, essays
     category: "Inspiration",
     tags: ["Digital Garden", "Writing", "Knowledge", "Culture"],
     author: {
-      name: "Elena Rostova",
-      avatar: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300&auto=format&fit=crop&q=80",
-      role: "Research Fellow"
+      name: "Sobi",
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
+      role: "Author"
     },
     publishedAt: "2026-07-28T16:45:00Z",
     readingTime: 3,
@@ -370,9 +370,9 @@ Most modern software strives for *automation*—taking human tasks and executing
     category: "Pioneers",
     tags: ["History", "Engelbart", "HCI", "Pioneers"],
     author: {
-      name: "Julian Vance",
+      name: "Sobi",
       avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
-      role: "Staff Design Engineer"
+      role: "Author"
     },
     publishedAt: "2026-07-15T08:00:00Z",
     readingTime: 7,

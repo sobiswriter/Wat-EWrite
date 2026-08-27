@@ -96,6 +96,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     createPost,
     updatePost,
     deletePost,
+    claimAllPostsAsAuthor,
+    deleteStarterPosts,
     togglePostFeatured,
     togglePostDraft,
     deleteComment,
@@ -488,7 +490,7 @@ Summarize your perspective with actionable wisdom for your readers.`);
               </span>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-semibold border border-emerald-200">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Live Mode
+                Live
               </span>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#F3F1EC] text-[#444444] text-[10px] font-semibold border border-[#E5E2DC]" title="Real-time persistent cloud storage active">
                 <span className={`w-1.5 h-1.5 rounded-full ${isCloudSynced ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
@@ -496,7 +498,7 @@ Summarize your perspective with actionable wisdom for your readers.`);
               </span>
             </div>
             <p className="text-[11px] text-[#777777] hidden sm:block">
-              Full no-code control over showcase, about collective, topics, essays & newsletter
+              Full no-code control over showcase, about profile, topics, essays & newsletter
             </p>
           </div>
         </div>
@@ -744,7 +746,7 @@ Summarize your perspective with actionable wisdom for your readers.`);
               <span>{settings.blogName}</span>
               <span className="font-mono">{settings.volume || 'Vol. IV'}</span>
             </div>
-            <p className="text-[10px] text-[#AAAAAA]">Persistent local client storage</p>
+            <p className="text-[10px] text-[#AAAAAA]">Real-time cloud database storage</p>
           </div>
         </aside>
 
@@ -781,13 +783,43 @@ Summarize your perspective with actionable wisdom for your readers.`);
                   </p>
                 </div>
 
-                <button
-                  onClick={handleOpenNewPost}
-                  className="px-4 py-2 bg-[#D44D2E] hover:bg-[#B83C1F] text-white rounded-xl text-xs font-semibold shadow-xs flex items-center gap-2 cursor-pointer shrink-0"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Create New Essay</span>
-                </button>
+                <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                  <button
+                    onClick={() => {
+                      claimAllPostsAsAuthor();
+                      setSaveNotification(`All essays attributed to ${settings.authorName || 'you'} across the site!`);
+                      setTimeout(() => setSaveNotification(null), 3500);
+                    }}
+                    className="px-3 py-2 bg-[#FFFFFF] hover:bg-[#F3F1EC] border border-[#E5E2DC] text-[#111111] rounded-xl text-xs font-semibold shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                    title="Set your author profile on all essays"
+                  >
+                    <User className="w-3.5 h-3.5 text-[#D44D2E]" />
+                    <span>Set Me as Author on All</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Delete all default starter/sample posts? This leaves a clean slate for only your personal writing.')) {
+                        deleteStarterPosts();
+                        setSaveNotification('Default sample posts removed!');
+                        setTimeout(() => setSaveNotification(null), 3500);
+                      }
+                    }}
+                    className="px-3 py-2 bg-[#FFFFFF] hover:bg-rose-50 border border-[#E5E2DC] hover:border-rose-200 text-rose-600 rounded-xl text-xs font-semibold shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                    title="Remove starter sample posts"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Clear Sample Posts</span>
+                  </button>
+
+                  <button
+                    onClick={handleOpenNewPost}
+                    className="px-4 py-2 bg-[#D44D2E] hover:bg-[#B83C1F] text-white rounded-xl text-xs font-semibold shadow-xs flex items-center gap-2 cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Create New Essay</span>
+                  </button>
+                </div>
               </div>
 
               {/* Filter controls */}

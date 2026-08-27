@@ -124,13 +124,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 <div className="mt-6 pt-4 border-t border-[#F3F1EC] flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <img
-                      src={featuredPost.author.avatar}
-                      alt={featuredPost.author.name}
+                      src={featuredPost.author?.avatar || settings.authorAvatar}
+                      alt={featuredPost.author?.name || settings.authorName}
                       className="w-7 h-7 rounded-full object-cover border border-[#E5E2DC]"
                       referrerPolicy="no-referrer"
                     />
                     <span className="text-xs font-medium text-[#4D4842]">
-                      {featuredPost.author.name}
+                      {featuredPost.author?.name || settings.authorName}
                     </span>
                   </div>
 

@@ -112,8 +112,22 @@ export const WritingDesk: React.FC<WritingDeskProps> = ({
       setSlug(initialPost.slug);
       setSeoTitle(initialPost.seoTitle || '');
       setSeoDescription(initialPost.seoDescription || '');
+    } else {
+      setEditingId(null);
+      setTitle('');
+      setSubtitle('');
+      setExcerpt('');
+      setContent('');
+      setCoverImage(COVER_PRESETS[0].url);
+      setCategory(settings.categories?.[0] || 'Design Philosophy');
+      setTags('');
+      setIsFeatured(false);
+      setIsDraft(false);
+      setSlug('');
+      setSeoTitle('');
+      setSeoDescription('');
     }
-  }, [initialPost]);
+  }, [initialPost, settings.categories]);
 
   // Statistics
   const wordCount = content.trim() ? content.trim().split(/\s+/).filter(Boolean).length : 0;
@@ -349,6 +363,11 @@ export const WritingDesk: React.FC<WritingDeskProps> = ({
         seoTitle: seoTitle.trim() || `${title.trim()} — ${settings.blogName}`,
         seoDescription: seoDescription.trim() || finalExcerpt,
         readingTime,
+        author: {
+          name: settings.authorName,
+          avatar: settings.authorAvatar,
+          role: settings.authorRole
+        },
         updatedAt: new Date().toISOString()
       });
 
