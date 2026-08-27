@@ -57,11 +57,11 @@ export const INITIAL_SETTINGS: BlogSettings = {
   ],
   aboutColophon: "This publication is typeset in Plus Jakarta Sans for interface and headings and Fraunces for editorial accents and pull quotes. Monospace code blocks are rendered in JetBrains Mono.",
   socialLinks: {
-    twitter: "https://x.com",
+    instagram: "https://instagram.com/sobi",
     github: "https://github.com",
     linkedin: "https://linkedin.com",
     email: "editorial@watewrites.dev",
-    website: "https://watewrites.dev"
+    website: "https://sobi.codes"
   },
   newsletterTitle: "The Weekly Dispatch",
   newsletterSubtitle: "Join 5,200+ founders, designers, and engineers receiving deep-dives on digital craft and curated web discoveries every Sunday.",

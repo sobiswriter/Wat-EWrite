@@ -443,14 +443,19 @@ export const PostView: React.FC<PostViewProps> = ({
               {settings.authorBio}
             </p>
             <div className="mt-4 flex items-center gap-4 text-xs font-medium text-[#D44D2E]">
-              {settings.socialLinks.twitter && (
-                <a href={settings.socialLinks.twitter} target="_blank" rel="noreferrer" className="hover:underline">
-                  Twitter / X
+              {settings.socialLinks.instagram && (
+                <a href={settings.socialLinks.instagram} target="_blank" rel="noreferrer" className="hover:underline">
+                  Instagram
                 </a>
               )}
               {settings.socialLinks.github && (
                 <a href={settings.socialLinks.github} target="_blank" rel="noreferrer" className="hover:underline">
                   GitHub
+                </a>
+              )}
+              {settings.socialLinks.website && (
+                <a href={settings.socialLinks.website} target="_blank" rel="noreferrer" className="hover:underline">
+                  Website
                 </a>
               )}
               {settings.socialLinks.email && (

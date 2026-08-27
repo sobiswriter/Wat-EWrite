@@ -9,7 +9,7 @@ import {
   Trash2,
   CheckCircle2,
   Globe,
-  Twitter,
+  Instagram,
   Github,
   Linkedin,
   Mail,
@@ -69,10 +69,10 @@ export const AboutManager: React.FC = () => {
       'This publication is typeset in Plus Jakarta Sans for interface and headings and Fraunces for editorial accents and pull quotes. Monospace code blocks are rendered in JetBrains Mono.'
   );
 
-  const [twitter, setTwitter] = useState(settings.socialLinks?.twitter || 'https://x.com');
+  const [instagram, setInstagram] = useState(settings.socialLinks?.instagram || 'https://instagram.com/sobi');
   const [github, setGithub] = useState(settings.socialLinks?.github || 'https://github.com');
   const [linkedin, setLinkedin] = useState(settings.socialLinks?.linkedin || 'https://linkedin.com');
-  const [website, setWebsite] = useState(settings.socialLinks?.website || 'https://watewrites.dev');
+  const [website, setWebsite] = useState(settings.socialLinks?.website || 'https://sobi.codes');
   const [email, setEmail] = useState(settings.socialLinks?.email || 'editorial@watewrites.dev');
 
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -134,7 +134,7 @@ export const AboutManager: React.FC = () => {
       aboutPrinciples: principles,
       aboutColophon,
       socialLinks: {
-        twitter: twitter.trim() || undefined,
+        instagram: instagram.trim() || undefined,
         github: github.trim() || undefined,
         linkedin: linkedin.trim() || undefined,
         website: website.trim() || undefined,
@@ -441,14 +441,14 @@ export const AboutManager: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
           <div>
             <label className="block text-xs font-semibold text-[#444444] mb-1 flex items-center gap-1.5">
-              <Twitter className="w-3.5 h-3.5 text-[#555555]" />
-              <span>Twitter / X</span>
+              <Instagram className="w-3.5 h-3.5 text-[#E1306C]" />
+              <span>Instagram</span>
             </label>
             <input
               type="text"
-              value={twitter}
-              onChange={e => setTwitter(e.target.value)}
-              placeholder="https://x.com/username"
+              value={instagram}
+              onChange={e => setInstagram(e.target.value)}
+              placeholder="https://instagram.com/username"
               className="w-full px-3 py-1.5 bg-[#F9F8F6] border border-[#E5E2DC] rounded-lg text-xs text-[#111111] focus:outline-hidden"
             />
           </div>

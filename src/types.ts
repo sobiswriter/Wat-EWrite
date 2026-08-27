@@ -88,6 +88,7 @@ export interface BlogSettings {
   aboutPrinciples: AboutPrinciple[];
   aboutColophon: string;
   socialLinks: {
+    instagram?: string;
     twitter?: string;
     github?: string;
     linkedin?: string;

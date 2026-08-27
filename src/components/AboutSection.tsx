@@ -1,6 +1,6 @@
 import React from 'react';
 import { useBlog } from '../context/BlogContext';
-import { Mail, MapPin, Feather, Globe, Github, Twitter, Linkedin } from 'lucide-react';
+import { Mail, MapPin, Feather, Globe, Github, Linkedin, Instagram } from 'lucide-react';
 
 export const AboutSection: React.FC = () => {
   const { settings } = useBlog();
@@ -55,15 +55,15 @@ export const AboutSection: React.FC = () => {
 
           {/* Social Links */}
           <div className="mt-6 flex flex-wrap items-center justify-center sm:justify-start gap-3">
-            {settings.socialLinks.twitter && (
+            {settings.socialLinks.instagram && (
               <a
-                href={settings.socialLinks.twitter}
+                href={settings.socialLinks.instagram}
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-1.5 px-3.5 py-1.5 bg-white border border-[#E5E2DC] rounded-lg text-xs font-medium text-[#111111] hover:border-[#111111] transition-colors"
               >
-                <Twitter className="w-3.5 h-3.5 text-[#666666]" />
-                <span>Twitter / X</span>
+                <Instagram className="w-3.5 h-3.5 text-[#E1306C]" />
+                <span>Instagram</span>
               </a>
             )}
             {settings.socialLinks.github && (

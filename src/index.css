@@ -174,19 +174,54 @@ body {
   color: #1A1A1A;
 }
 
-/* Custom scrollbar */
+/* Ultra-Slick, Floating Scrollbar System (No gutter column, completely transparent track) */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(140, 130, 120, 0.3) transparent;
+}
+
+body {
+  overflow-x: hidden;
+}
+
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 4px;
+  height: 4px;
+  background-color: transparent;
 }
+
 ::-webkit-scrollbar-track {
-  background: #F9F8F6;
+  background: transparent;
+  border: none;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: #D3CEC4;
+  background: rgba(160, 150, 140, 0.25);
   border-radius: 9999px;
+  border: none;
+  transition: background-color 0.2s ease;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: #9C968B;
+  background: rgba(100, 90, 80, 0.6);
 }
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Utility classes for hiding scrollbars completely */
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.no-scrollbar,
+.scrollbar-none {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
 

@@ -121,7 +121,15 @@ export const BlogProvider: React.FC<{ children: React.ReactNode }> = ({ children
           ).slice(0, 5);
           parsed.featuredPostIds = validIds.length > 0 ? validIds : INITIAL_SETTINGS.featuredPostIds;
         }
-        return { ...INITIAL_SETTINGS, ...parsed };
+        if (parsed.socialLinks) {
+          if (parsed.socialLinks.website === 'https://watewrites.dev') {
+            parsed.socialLinks.website = 'https://sobi.codes';
+          }
+          if (!parsed.socialLinks.instagram) {
+            parsed.socialLinks.instagram = 'https://instagram.com/sobi';
+          }
+        }
+        return { ...INITIAL_SETTINGS, ...parsed, socialLinks: { ...INITIAL_SETTINGS.socialLinks, ...(parsed.socialLinks || {}) } };
       }
       return INITIAL_SETTINGS;
     } catch {
