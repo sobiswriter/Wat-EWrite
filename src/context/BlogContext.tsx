@@ -739,9 +739,9 @@ export const BlogProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const cleanInput = (passcode || '').trim();
-    const targetPasscode = settings.adminPasscode || 'admin123';
+    const targetPasscode = (settings.adminPasscode || '').trim();
 
-    if (constantTimeEquals(cleanInput, targetPasscode) || constantTimeEquals(cleanInput, 'admin123')) {
+    if (targetPasscode && constantTimeEquals(cleanInput, targetPasscode)) {
       clearRateLimit();
       setIsAdminLoggedIn(true);
       return { success: true };

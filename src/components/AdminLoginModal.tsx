@@ -146,10 +146,12 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   };
 
   const handleCopyCurrentPasskey = () => {
-    const currentKey = settings.adminPasscode || 'admin123';
-    navigator.clipboard.writeText(currentKey);
-    setCopiedPasskey(true);
-    setTimeout(() => setCopiedPasskey(false), 2000);
+    const currentKey = settings.adminPasscode || '';
+    if (currentKey) {
+      navigator.clipboard.writeText(currentKey);
+      setCopiedPasskey(true);
+      setTimeout(() => setCopiedPasskey(false), 2000);
+    }
   };
 
   return (
@@ -244,31 +246,19 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                 </div>
               )}
 
-              {/* Default Passcode & Forgot Passkey Row */}
-              <div className="space-y-2 pt-1">
-                <div className="p-2.5 bg-[#F9EBE7] rounded-xl border border-[#F0D5CE] text-[11px] text-[#942C17] flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 font-medium">
-                    <KeyRound className="w-3.5 h-3.5 text-[#D44D2E]" />
-                    <span>Default Studio Passkey:</span>
-                  </div>
-                  <code className="bg-white/80 px-2 py-0.5 rounded font-mono font-bold text-[#942C17]">
-                    admin123
-                  </code>
-                </div>
-
-                <div className="flex items-center justify-end">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setView('trick_question');
-                      setErrorMessage(null);
-                    }}
-                    className="text-xs text-[#D44D2E] hover:text-[#B83C1F] font-semibold hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5" />
-                    <span>Forgot Passkey? (Answer Trick Question)</span>
-                  </button>
-                </div>
+              {/* Forgot Passkey Row */}
+              <div className="flex items-center justify-end pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setView('trick_question');
+                    setErrorMessage(null);
+                  }}
+                  className="text-xs text-[#6B665F] hover:text-[#111111] font-medium hover:underline flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <HelpCircle className="w-3.5 h-3.5 text-[#888888]" />
+                  <span>Forgot Passkey? (Security Question)</span>
+                </button>
               </div>
 
               <button
@@ -334,7 +324,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                   required
                   autoFocus
                   disabled={lockoutSeconds > 0}
-                  placeholder="Type your answer (e.g. Ness)..."
+                  placeholder="Type your answer..."
                   value={trickAnswer}
                   onChange={e => {
                     setTrickAnswer(e.target.value);
@@ -346,20 +336,6 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                       : 'border-[#E5E2DC] focus:border-[#D44D2E]'
                   }`}
                 />
-              </div>
-
-              {/* Hint badge */}
-              <div className="flex items-center justify-between text-[11px] text-[#666666] bg-amber-50/80 border border-amber-200/70 p-2.5 rounded-xl">
-                <span className="font-medium text-amber-900">
-                  Trick Question Hint:
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setTrickAnswer('Ness')}
-                  className="font-mono font-bold text-amber-900 underline hover:text-amber-700 cursor-pointer"
-                >
-                  Ness
-                </button>
               </div>
 
               {errorMessage && (
@@ -420,7 +396,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
               </span>
               <div className="flex items-center justify-between">
                 <code className="font-mono text-base font-bold text-[#111111] bg-white px-3 py-1 rounded-lg border border-[#E5E2DC]">
-                  {settings.adminPasscode || 'admin123'}
+                  {settings.adminPasscode || '••••••••'}
                 </code>
                 <button
                   type="button"
@@ -519,7 +495,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    loginAdmin(settings.adminPasscode || 'admin123');
+                    loginAdmin(settings.adminPasscode || '');
                     onSuccess();
                   }}
                   className="w-full py-2.5 bg-[#111111] hover:bg-[#333333] text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
