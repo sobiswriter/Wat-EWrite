@@ -105,7 +105,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     sendNewsletterBroadcast,
     updateSettings,
     logoutAdmin,
-    analyticsEvents
+    analyticsEvents,
+    isCloudSynced
   } = useBlog();
 
   const [activeTab, setActiveTab] = useState<AdminTab>('posts');
@@ -488,6 +489,10 @@ Summarize your perspective with actionable wisdom for your readers.`);
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-semibold border border-emerald-200">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Live Mode
+              </span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#F3F1EC] text-[#444444] text-[10px] font-semibold border border-[#E5E2DC]" title="Real-time persistent cloud storage active">
+                <span className={`w-1.5 h-1.5 rounded-full ${isCloudSynced ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
+                <span>{isCloudSynced ? 'Cloud Synced' : 'Syncing...'}</span>
               </span>
             </div>
             <p className="text-[11px] text-[#777777] hidden sm:block">

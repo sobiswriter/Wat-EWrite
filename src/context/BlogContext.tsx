@@ -1,4 +1,13 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import {
+  collection,
+  doc,
+  onSnapshot,
+  setDoc,
+  deleteDoc,
+  writeBatch
+} from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import { Post, Comment, Subscriber, BlogSettings, AnalyticsEvent } from '../types';
 import { INITIAL_POSTS, INITIAL_COMMENTS, INITIAL_SUBSCRIBERS, INITIAL_SETTINGS } from '../data/initialData';
 import {
@@ -8,6 +17,20 @@ import {
   recordFailedAttempt,
   clearRateLimit
 } from '../utils/security';
+
+// Helper to remove undefined properties before saving to Firestore
+function cleanData<T extends Record<string, any>>(obj: T): T {
+  const clean: Record<string, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value === undefined) continue;
+    if (value !== null && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+      clean[key] = cleanData(value);
+    } else {
+      clean[key] = value;
+    }
+  }
+  return clean as T;
+}
 
 interface BlogContextType {
   posts: Post[];
@@ -19,6 +42,7 @@ interface BlogContextType {
   readingTheme: 'light' | 'sepia' | 'dark';
   fontSizeMode: 'sm' | 'md' | 'lg';
   activePost: Post | null;
+  isCloudSynced: boolean;
   
   // Post Actions
   setActivePost: (post: Post | null) => void;
@@ -74,6 +98,10 @@ const STORAGE_KEYS = {
 };
 
 export const BlogProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isCloudSynced, setIsCloudSynced] = useState<boolean>(false);
+  const isInitialPostsSeeded = useRef(false);
+  const isInitialSettingsSeeded = useRef(false);
+
   // 1. Posts State
   const [posts, setPosts] = useState<Post[]>(() => {
     try {
@@ -110,16 +138,8 @@ export const BlogProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const saved = localStorage.getItem(STORAGE_KEYS.SETTINGS);
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Ensure blog name updates if it was previous default
         if (parsed.blogName === 'Tools & Craft' || parsed.blogName === 'Chronicle & Craft') {
           parsed.blogName = "Wat'EWrites";
-        }
-        // Sanitize featuredPostIds to only valid non-draft IDs capped at 5
-        if (Array.isArray(parsed.featuredPostIds)) {
-          const validIds = parsed.featuredPostIds.filter((id: string) =>
-            posts.some(p => p.id === id && !p.isDraft)
-          ).slice(0, 5);
-          parsed.featuredPostIds = validIds.length > 0 ? validIds : INITIAL_SETTINGS.featuredPostIds;
         }
         if (parsed.socialLinks) {
           if (parsed.socialLinks.website === 'https://watewrites.dev') {
@@ -147,7 +167,7 @@ export const BlogProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   });
 
-  // 6. Admin Auth State (Requires passkey on every studio entrance session)
+  // 6. Admin Auth State
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(false);
 
   // 7. Reading Preferences
@@ -175,9 +195,8 @@ export const BlogProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const saved = localStorage.getItem(STORAGE_KEYS.ANALYTICS);
       if (saved) return JSON.parse(saved);
     } catch {
-      // fallback initial seed
+      // fallback
     }
-    // Seed initial synthetic analytics for charts
     const now = new Date();
     const seedEvents: AnalyticsEvent[] = [];
     const referrers = ['direct', 'google.com', 'x.com', 'news.ycombinator.com', 'github.com'];
@@ -204,7 +223,145 @@ export const BlogProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [activePost, setActivePost] = useState<Post | null>(null);
 
-  // Sync to localStorage
+  // ==========================================
+  // REAL-TIME FIRESTORE SYNCHRONIZATION ENGINE
+  // ==========================================
+  useEffect(() => {
+    let unsubscribePosts: (() => void) | undefined;
+    let unsubscribeSettings: (() => void) | undefined;
+    let unsubscribeComments: (() => void) | undefined;
+    let unsubscribeSubscribers: (() => void) | undefined;
+    let unsubscribeAnalytics: (() => void) | undefined;
+
+    try {
+      // 1. Sync Posts Collection
+      const postsCol = collection(db, 'posts');
+      unsubscribePosts = onSnapshot(postsCol, async (snapshot) => {
+        if (snapshot.empty && !isInitialPostsSeeded.current) {
+          isInitialPostsSeeded.current = true;
+          try {
+            const batch = writeBatch(db);
+            INITIAL_POSTS.forEach((p) => {
+              const pRef = doc(db, 'posts', p.id);
+              batch.set(pRef, cleanData(p));
+            });
+            await batch.commit();
+          } catch (err) {
+            console.warn('Could not seed initial posts to Firestore:', err);
+          }
+        } else if (!snapshot.empty) {
+          const loadedPosts: Post[] = [];
+          snapshot.forEach((docSnap) => {
+            const data = docSnap.data() as Post;
+            loadedPosts.push({ ...data, id: docSnap.id });
+          });
+          // Sort by publishedAt descending
+          loadedPosts.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+          setPosts(loadedPosts);
+          setIsCloudSynced(true);
+        }
+      }, (err) => {
+        console.warn('Firestore posts listener note:', err);
+      });
+
+      // 2. Sync Settings Document
+      const settingsDocRef = doc(db, 'settings', 'site');
+      unsubscribeSettings = onSnapshot(settingsDocRef, async (snapshot) => {
+        if (!snapshot.exists() && !isInitialSettingsSeeded.current) {
+          isInitialSettingsSeeded.current = true;
+          try {
+            await setDoc(settingsDocRef, cleanData(settings));
+          } catch (err) {
+            console.warn('Could not seed initial settings to Firestore:', err);
+          }
+        } else if (snapshot.exists()) {
+          const remoteSettings = snapshot.data() as BlogSettings;
+          setSettings((prev) => ({
+            ...prev,
+            ...remoteSettings,
+            socialLinks: {
+              ...prev.socialLinks,
+              ...(remoteSettings.socialLinks || {})
+            }
+          }));
+          setIsCloudSynced(true);
+        }
+      }, (err) => {
+        console.warn('Firestore settings listener note:', err);
+      });
+
+      // 3. Sync Comments Collection
+      const commentsCol = collection(db, 'comments');
+      unsubscribeComments = onSnapshot(commentsCol, async (snapshot) => {
+        if (!snapshot.empty) {
+          const loadedComments: Comment[] = [];
+          snapshot.forEach((docSnap) => {
+            loadedComments.push({ ...(docSnap.data() as Comment), id: docSnap.id });
+          });
+          loadedComments.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          setComments(loadedComments);
+        }
+      }, (err) => {
+        console.warn('Firestore comments listener note:', err);
+      });
+
+      // 4. Sync Subscribers Collection
+      const subscribersCol = collection(db, 'subscribers');
+      unsubscribeSubscribers = onSnapshot(subscribersCol, async (snapshot) => {
+        if (snapshot.empty) {
+          try {
+            const batch = writeBatch(db);
+            INITIAL_SUBSCRIBERS.forEach((s) => {
+              const sRef = doc(db, 'subscribers', s.id);
+              batch.set(sRef, cleanData(s));
+            });
+            await batch.commit();
+          } catch {
+            // ignore
+          }
+        } else {
+          const loadedSubs: Subscriber[] = [];
+          snapshot.forEach((docSnap) => {
+            loadedSubs.push({ ...(docSnap.data() as Subscriber), id: docSnap.id });
+          });
+          loadedSubs.sort((a, b) => new Date(b.subscribedAt).getTime() - new Date(a.subscribedAt).getTime());
+          setSubscribers(loadedSubs);
+        }
+      }, (err) => {
+        console.warn('Firestore subscribers listener note:', err);
+      });
+
+      // 5. Sync Analytics Collection
+      const analyticsCol = collection(db, 'analytics');
+      unsubscribeAnalytics = onSnapshot(analyticsCol, (snapshot) => {
+        if (!snapshot.empty) {
+          const loadedEv: AnalyticsEvent[] = [];
+          snapshot.forEach((docSnap) => {
+            loadedEv.push({ ...(docSnap.data() as AnalyticsEvent), id: docSnap.id });
+          });
+          loadedEv.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+          if (loadedEv.length > 0) {
+            setAnalyticsEvents(loadedEv.slice(-500));
+          }
+        }
+      }, (err) => {
+        console.warn('Firestore analytics listener note:', err);
+      });
+
+    } catch (e) {
+      console.error('Error initializing Firestore sync:', e);
+    }
+
+    return () => {
+      unsubscribePosts?.();
+      unsubscribeSettings?.();
+      unsubscribeComments?.();
+      unsubscribeSubscribers?.();
+      unsubscribeAnalytics?.();
+    };
+  }, []);
+
+  // Sync to localStorage as offline safety layer
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(posts));
@@ -294,7 +451,7 @@ export const BlogProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const newEvent: AnalyticsEvent = {
-      id: `ev-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      id: `ev-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       timestamp: new Date().toISOString(),
       type,
       postId,
@@ -304,9 +461,17 @@ export const BlogProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     setAnalyticsEvents(prev => [...prev.slice(-499), newEvent]);
+
+    // Persist event to cloud Firestore
+    try {
+      const eventRef = doc(db, 'analytics', newEvent.id);
+      setDoc(eventRef, cleanData(newEvent)).catch(() => {});
+    } catch {
+      // ignore
+    }
   };
 
-  // Post Actions
+  // Post Actions (Cloud Persisted & Real-time)
   const createPost = (postData: Omit<Post, 'id' | 'views' | 'likes'>): Post => {
     const id = `post-${Date.now()}`;
     const newPost: Post = {
@@ -315,20 +480,39 @@ export const BlogProvider: React.FC<{ children: React.ReactNode }> = ({ children
       views: 0,
       likes: 0
     };
+    
+    // Optimistic local update
     setPosts(prev => [newPost, ...prev]);
+
+    // Cloud persistence
+    const postRef = doc(db, 'posts', id);
+    setDoc(postRef, cleanData(newPost)).catch(err => {
+      console.error('Error saving new post to Firestore:', err);
+    });
+
     return newPost;
   };
 
   const updatePost = (id: string, postData: Partial<Post>) => {
+    const updatedData = { ...postData, updatedAt: new Date().toISOString() };
+    
+    // Optimistic update
     setPosts(prev =>
-      prev.map(p => (p.id === id ? { ...p, ...postData, updatedAt: new Date().toISOString() } : p))
+      prev.map(p => (p.id === id ? { ...p, ...updatedData } : p))
     );
     if (activePost && activePost.id === id) {
-      setActivePost(prev => (prev ? { ...prev, ...postData } : null));
+      setActivePost(prev => (prev ? { ...prev, ...updatedData } : null));
     }
+
+    // Cloud persistence
+    const postRef = doc(db, 'posts', id);
+    setDoc(postRef, cleanData(updatedData), { merge: true }).catch(err => {
+      console.error('Error updating post in Firestore:', err);
+    });
   };
 
   const deletePost = (id: string) => {
+    // Optimistic update
     setPosts(prev => prev.filter(p => p.id !== id));
     setComments(prev => prev.filter(c => c.postId !== id));
     setSettings(prev => ({
@@ -338,53 +522,94 @@ export const BlogProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (activePost && activePost.id === id) {
       setActivePost(null);
     }
+
+    // Cloud persistence
+    const postRef = doc(db, 'posts', id);
+    deleteDoc(postRef).catch(err => {
+      console.error('Error deleting post in Firestore:', err);
+    });
+
+    // Clean up in settings doc
+    const nextFeatured = (settings.featuredPostIds || []).filter(pid => pid !== id);
+    const settingsRef = doc(db, 'settings', 'site');
+    setDoc(settingsRef, { featuredPostIds: nextFeatured }, { merge: true }).catch(() => {});
   };
 
   const togglePostFeatured = (id: string) => {
-    setPosts(prev =>
-      prev.map(p => (p.id === id ? { ...p, isFeatured: !p.isFeatured } : p))
-    );
-  };
+    const target = posts.find(p => p.id === id);
+    if (!target) return;
+    const nextFeatured = !target.isFeatured;
 
-  const togglePostDraft = (id: string) => {
-    setPosts(prev => {
-      const next = prev.map(p => (p.id === id ? { ...p, isDraft: !p.isDraft } : p));
-      const targetPost = next.find(p => p.id === id);
-      if (targetPost?.isDraft) {
-        setSettings(s => ({
-          ...s,
-          featuredPostIds: (s.featuredPostIds || []).filter(pid => pid !== id)
-        }));
-      }
-      return next;
+    setPosts(prev =>
+      prev.map(p => (p.id === id ? { ...p, isFeatured: nextFeatured } : p))
+    );
+
+    const postRef = doc(db, 'posts', id);
+    setDoc(postRef, { isFeatured: nextFeatured }, { merge: true }).catch(err => {
+      console.error('Error toggling featured state:', err);
     });
   };
 
-  const likePost = (id: string) => {
+  const togglePostDraft = (id: string) => {
+    const target = posts.find(p => p.id === id);
+    if (!target) return;
+    const nextDraft = !target.isDraft;
+
     setPosts(prev =>
-      prev.map(p => (p.id === id ? { ...p, likes: p.likes + 1 } : p))
+      prev.map(p => (p.id === id ? { ...p, isDraft: nextDraft } : p))
+    );
+
+    const postRef = doc(db, 'posts', id);
+    setDoc(postRef, { isDraft: nextDraft }, { merge: true }).catch(err => {
+      console.error('Error toggling draft status:', err);
+    });
+
+    if (nextDraft) {
+      const nextFeatured = (settings.featuredPostIds || []).filter(pid => pid !== id);
+      updateSettings({ featuredPostIds: nextFeatured });
+    }
+  };
+
+  const likePost = (id: string) => {
+    const target = posts.find(p => p.id === id);
+    const newLikes = (target?.likes || 0) + 1;
+
+    setPosts(prev =>
+      prev.map(p => (p.id === id ? { ...p, likes: newLikes } : p))
     );
     if (activePost && activePost.id === id) {
-      setActivePost(prev => (prev ? { ...prev, likes: prev.likes + 1 } : null));
+      setActivePost(prev => (prev ? { ...prev, likes: newLikes } : null));
     }
     logAnalyticsEvent('like', id);
+
+    const postRef = doc(db, 'posts', id);
+    setDoc(postRef, { likes: newLikes }, { merge: true }).catch(err => {
+      console.error('Error recording like to Firestore:', err);
+    });
   };
 
   const viewPost = (id: string) => {
+    const target = posts.find(p => p.id === id);
+    const newViews = (target?.views || 0) + 1;
+
     setPosts(prev =>
-      prev.map(p => (p.id === id ? { ...p, views: p.views + 1 } : p))
+      prev.map(p => (p.id === id ? { ...p, views: newViews } : p))
     );
-    const post = posts.find(p => p.id === id);
-    if (post) {
-      logAnalyticsEvent('post_view', id, post.title);
+    if (target) {
+      logAnalyticsEvent('post_view', id, target.title);
     }
+
+    const postRef = doc(db, 'posts', id);
+    setDoc(postRef, { views: newViews }, { merge: true }).catch(err => {
+      console.error('Error updating view count in Firestore:', err);
+    });
   };
 
-  // Comments Actions
+  // Comments Actions (Cloud Persisted & Real-time)
   const addComment = (postId: string, authorName: string, content: string, parentId: string | null = null) => {
     if (!authorName.trim() || !content.trim()) return;
     const newComment: Comment = {
-      id: `comm-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      id: `comm-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       postId,
       authorName: authorName.trim(),
       content: content.trim(),
@@ -396,19 +621,37 @@ export const BlogProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setComments(prev => [newComment, ...prev]);
     logAnalyticsEvent('comment', postId);
+
+    const commentRef = doc(db, 'comments', newComment.id);
+    setDoc(commentRef, cleanData(newComment)).catch(err => {
+      console.error('Error saving comment to Firestore:', err);
+    });
   };
 
   const likeComment = (commentId: string) => {
+    const target = comments.find(c => c.id === commentId);
+    const newLikes = (target?.likes || 0) + 1;
+
     setComments(prev =>
-      prev.map(c => (c.id === commentId ? { ...c, likes: c.likes + 1 } : c))
+      prev.map(c => (c.id === commentId ? { ...c, likes: newLikes } : c))
     );
+
+    const commentRef = doc(db, 'comments', commentId);
+    setDoc(commentRef, { likes: newLikes }, { merge: true }).catch(err => {
+      console.error('Error liking comment in Firestore:', err);
+    });
   };
 
   const deleteComment = (commentId: string) => {
     setComments(prev => prev.filter(c => c.id !== commentId && c.parentId !== commentId));
+
+    const commentRef = doc(db, 'comments', commentId);
+    deleteDoc(commentRef).catch(err => {
+      console.error('Error deleting comment in Firestore:', err);
+    });
   };
 
-  // Newsletter Actions
+  // Newsletter Actions (Cloud Persisted & Real-time)
   const addSubscriber = (
     email: string,
     name?: string,
@@ -424,12 +667,15 @@ export const BlogProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const existing = subscribers.find(s => s.email.toLowerCase() === cleanEmail);
     if (existing) {
       if (existing.status === 'unsubscribed') {
+        const updatedTime = new Date().toISOString();
         setSubscribers(prev =>
-          prev.map(s => (s.id === existing.id ? { ...s, status: 'active', subscribedAt: new Date().toISOString() } : s))
+          prev.map(s => (s.id === existing.id ? { ...s, status: 'active', subscribedAt: updatedTime } : s))
         );
+        const subRef = doc(db, 'subscribers', existing.id);
+        setDoc(subRef, { status: 'active', subscribedAt: updatedTime }, { merge: true }).catch(() => {});
         return { success: true, message: 'Welcome back! Your subscription has been reactivated.' };
       }
-      return { success: true, message: "You're already subscribed to The Sunday Dispatch!" };
+      return { success: true, message: "You're already subscribed to The Weekly Dispatch!" };
     }
 
     const newSub: Subscriber = {
@@ -444,17 +690,31 @@ export const BlogProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setSubscribers(prev => [newSub, ...prev]);
     logAnalyticsEvent('subscribe');
+
+    const subRef = doc(db, 'subscribers', newSub.id);
+    setDoc(subRef, cleanData(newSub)).catch(err => {
+      console.error('Error saving subscriber to Firestore:', err);
+    });
+
     return { success: true, message: "You're on the list! Thank you for subscribing." };
   };
 
   const removeSubscriber = (id: string) => {
     setSubscribers(prev => prev.filter(s => s.id !== id));
+    const subRef = doc(db, 'subscribers', id);
+    deleteDoc(subRef).catch(err => {
+      console.error('Error removing subscriber in Firestore:', err);
+    });
   };
 
   const updateSubscriberStatus = (id: string, status: 'active' | 'unsubscribed') => {
     setSubscribers(prev =>
       prev.map(s => (s.id === id ? { ...s, status } : s))
     );
+    const subRef = doc(db, 'subscribers', id);
+    setDoc(subRef, { status }, { merge: true }).catch(err => {
+      console.error('Error updating subscriber status in Firestore:', err);
+    });
   };
 
   const sendNewsletterBroadcast = (subject: string, content: string, targetTag?: string) => {
@@ -463,7 +723,6 @@ export const BlogProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!targetTag || targetTag === 'all') return true;
       return s.preferences?.includes(targetTag);
     });
-    // Record broadcast in analytics or log
     return { sentCount: activeSubs.length };
   };
 
@@ -571,6 +830,11 @@ export const BlogProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ...(newSettings.featuredPostIds !== undefined ? { featuredPostIds: nextFeatured } : {})
       };
     });
+
+    const settingsRef = doc(db, 'settings', 'site');
+    setDoc(settingsRef, cleanData(newSettings), { merge: true }).catch(err => {
+      console.error('Error saving settings to Firestore:', err);
+    });
   };
 
   // Bookmarks
@@ -594,6 +858,7 @@ export const BlogProvider: React.FC<{ children: React.ReactNode }> = ({ children
         readingTheme,
         fontSizeMode,
         activePost,
+        isCloudSynced,
         setActivePost,
         createPost,
         updatePost,

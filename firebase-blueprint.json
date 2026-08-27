@@ -1,0 +1,107 @@
+{
+  "entities": {
+    "posts": {
+      "title": "Post",
+      "description": "Editorial articles and blog posts",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "slug": { "type": "string" },
+        "excerpt": { "type": "string" },
+        "content": { "type": "string" },
+        "category": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "coverImage": { "type": "string" },
+        "coverCaption": { "type": "string" },
+        "coverAspect": { "type": "string" },
+        "publishedAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "status": { "type": "string" },
+        "readTimeMinutes": { "type": "number" },
+        "views": { "type": "number" },
+        "likes": { "type": "number" },
+        "isFeatured": { "type": "boolean" },
+        "pullQuote": { "type": "string" },
+        "showcaseId": { "type": "string" },
+        "metaDescription": { "type": "string" }
+      },
+      "required": ["title", "slug", "content", "status"]
+    },
+    "settings": {
+      "title": "SiteSettings",
+      "description": "Global website identity and author settings",
+      "type": "object",
+      "properties": {
+        "blogTitle": { "type": "string" },
+        "blogSubtitle": { "type": "string" },
+        "blogTagline": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorRole": { "type": "string" },
+        "authorBio": { "type": "string" },
+        "authorLocation": { "type": "string" },
+        "authorAvatar": { "type": "string" },
+        "aboutMission": { "type": "string" },
+        "aboutPrinciples": { "type": "array" },
+        "aboutColophon": { "type": "string" },
+        "socialLinks": { "type": "object" },
+        "newsletterTitle": { "type": "string" },
+        "newsletterSubtitle": { "type": "string" },
+        "featuredPostIds": { "type": "array", "items": { "type": "string" } },
+        "featuredStoryId": { "type": "string" },
+        "heroShowcaseIds": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "showcaseItems": {
+      "title": "ShowcaseItem",
+      "description": "Hero Showcase gallery items",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "coverImage": { "type": "string" },
+        "accentColor": { "type": "string" },
+        "tag": { "type": "string" },
+        "readTime": { "type": "string" },
+        "date": { "type": "string" },
+        "linkedPostId": { "type": "string" },
+        "externalUrl": { "type": "string" },
+        "order": { "type": "number" },
+        "active": { "type": "boolean" }
+      }
+    },
+    "subscribers": {
+      "title": "Subscriber",
+      "description": "Newsletter subscribers",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string" },
+        "subscribedAt": { "type": "string" },
+        "source": { "type": "string" }
+      },
+      "required": ["email", "subscribedAt"]
+    }
+  },
+  "firestore": {
+    "/posts/{postId}": {
+      "schema": "posts",
+      "description": "Blog posts collection"
+    },
+    "/settings/{settingId}": {
+      "schema": "settings",
+      "description": "Global settings collection"
+    },
+    "/showcaseItems/{itemId}": {
+      "schema": "showcaseItems",
+      "description": "Accordion showcase items"
+    },
+    "/subscribers/{subId}": {
+      "schema": "subscribers",
+      "description": "Newsletter subscribers list"
+    }
+  }
+}
