@@ -35,22 +35,22 @@ export const AboutSection: React.FC = () => {
           referrerPolicy="no-referrer"
         />
 
-        <div className="text-center sm:text-left">
+        <div className="text-center sm:text-left flex-1 min-w-0">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#F3F1EC] text-[#111111] text-xs font-semibold mb-3">
             <MapPin className="w-3.5 h-3.5 text-[#D44D2E]" />
-            <span>{settings.authorLocation || 'San Francisco, California'}</span>
+            <span>{settings.authorLocation || 'Church Street, Bengaluru, Karnataka'}</span>
           </div>
 
           <h1 className="font-sans text-3xl sm:text-4xl font-extrabold text-[#111111] tracking-tight">
-            About {settings.blogName}
+            {settings.authorName || `About ${settings.blogName}`}
           </h1>
 
           <p className="mt-2 text-base font-serif italic text-[#D44D2E]">
-            {settings.tagline}
+            {settings.authorRole ? `${settings.authorRole} — ${settings.tagline}` : settings.tagline}
           </p>
 
           <p className="mt-3 text-sm text-[#666666] leading-relaxed">
-            {settings.description}
+            {settings.authorBio || settings.description}
           </p>
 
           {/* Social Links */}
